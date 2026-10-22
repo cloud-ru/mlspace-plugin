@@ -1,0 +1,19 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "mlspace",
+  "version": "1.0.0",
+  "description": "Cloud.ru MLSpace: training jobs, inference, notebooks, data transfer, registry and compute catalog — an MCP server plus skills.",
+  "author": {
+    "name": "Cloud.ru"
+  },
+  "homepage": "https://cloud.ru/docs/aicloud/mlspace",
+  "license": "MIT",
+  "keywords": [
+    "mlspace",
+    "cloud.ru",
+    "mlops",
+    "training",
+    "inference",
+    "gpu"
+  ]
+}

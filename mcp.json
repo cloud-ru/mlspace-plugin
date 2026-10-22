@@ -1,0 +1,18 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "mlspace": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--python",
+        ">=3.10",
+        "--from",
+        "${PLUGIN_ROOT}",
+        "mlspace-plugin",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}

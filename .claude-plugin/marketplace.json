@@ -1,0 +1,12 @@
+{
+  "name": "mlspace",
+  "owner": {
+    "name": "Cloud.ru"
+  },
+  "plugins": [
+    {
+      "name": "mlspace",
+      "source": "./"
+    }
+  ]
+}

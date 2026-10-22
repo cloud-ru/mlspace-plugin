@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "mlspace": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--python",
+        ">=3.10",
+        "--from",
+        "${CLAUDE_PLUGIN_ROOT}",
+        "mlspace-plugin",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}

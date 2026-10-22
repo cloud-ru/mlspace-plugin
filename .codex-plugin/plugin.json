@@ -1,0 +1,24 @@
+{
+  "name": "mlspace",
+  "version": "1.0.0",
+  "description": "Cloud.ru MLSpace: training jobs, inference, notebooks, data transfer, registry and compute catalog — an MCP server plus skills.",
+  "author": {
+    "name": "Cloud.ru"
+  },
+  "skills": "./skills/",
+  "mcpServers": "./mcp.json",
+  "interface": {
+    "displayName": "MLSpace",
+    "shortDescription": "Manage Cloud.ru MLSpace with MCP and skills",
+    "longDescription": "Cloud.ru MLSpace: training jobs, inference, notebooks, data transfer, registry and compute catalog — an MCP server plus skills.",
+    "developerName": "Cloud.ru",
+    "category": "Developer tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Show jobs across my selected MLSpace workspaces."
+    ]
+  }
+}
