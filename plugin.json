@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "mlspace",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Cloud.ru MLSpace: training jobs, inference, notebooks, data transfer, registry and compute catalog — an MCP server plus skills.",
   "author": {
     "name": "Cloud.ru"

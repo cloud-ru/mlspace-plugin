@@ -23,6 +23,10 @@ def _configure_logging() -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         stream=sys.stderr,
     )
+    # INFO includes full URLs/query values; DEBUG can include response headers.
+    # Keep these out of client logs even when MLSpace debugging is enabled.
+    for name in ("httpx", "httpcore"):
+        logging.getLogger(name).setLevel(logging.WARNING)
 
 
 def main(argv: list[str] | None = None) -> int:

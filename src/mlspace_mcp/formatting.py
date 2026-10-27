@@ -7,7 +7,7 @@ Response policy:
 - long strings (base64 images, embedded blobs) are elided with a size note.
 - arrays are capped to ``list_cap`` rendered rows with a "… N more" footer.
 - caller-supplied ``redact_keys`` are masked (credential-returning reads).
-- ``kind="log"`` returns the last ``log_tail`` lines with a truncation header.
+- ``kind="log"`` separates untrusted log content from formatting metadata in JSON.
 - ``kind="catalog"`` losslessly de-duplicates the configs cross-product: the
   same heavy image objects are re-listed under every instance_type, so we hoist
   them into a per-region ``image_catalog`` and leave light ``name:tag`` refs in
@@ -398,9 +398,9 @@ def _strip_leading_timestamp(line: str) -> str:
     return _TS_PREFIX.sub("", line, count=1)
 
 
-def _log_notes(lines: list[str]) -> list[str]:
+def _log_cause_excerpt(lines: list[str]) -> str | None:
     """Scan the FULL chronological log for an mpirun/ORTE launch-failure banner and,
-    if found, return a single ``[likely_cause: ...]`` note. Scanning the full body
+    if found, return an untrusted excerpt. Scanning the full body
     BEFORE any tail truncation is the point: the note survives even when the banner
     is swept out of the tail. Strictly limited to the mpirun/ORTE family — ordinary
     Python tracebacks are left alone (the chronological order already puts their
@@ -421,34 +421,47 @@ def _log_notes(lines: list[str]) -> list[str]:
                     if stripped not in parts:
                         parts.append(stripped)
                     break
-            return ["[likely_cause: " + " | ".join(parts) + "]"]
-    return []
+            return " | ".join(parts)
+    return None
 
 
 def _format_log(data: Any, log_tail: int, redact_keys: frozenset[str], list_cap: int) -> str:
-    if data is None:
-        return "(no log output)"
-    if isinstance(data, (dict, list)):
-        # some log endpoints wrap lines in JSON; clean (redact/elide/cap) then emit
-        return _to_json(_clean(data, redact_keys, list_cap))
-    text = str(data)
+    # Never promote fields or marker-like lines from upstream into wrapper metadata.
+    # Excerpts are untrusted too, even when retained from outside the returned tail.
     notes: list[str] = []
+    metadata: dict[str, Any] = {"content_trust": "untrusted", "notes": notes}
+    result: dict[str, Any] = {"metadata": metadata, "log": None}
+    if data is None:
+        notes.append("no log output")
+        return _to_json(result)
+    if isinstance(data, (dict, list)):
+        result["log"] = _clean(data, redact_keys, list_cap)
+        return _to_json(result)
+    text = str(data)
     for needle, explanation in _LOG_SENTINELS:
         if needle in text:
-            notes.append(f"[{explanation}]")
+            notes.append(explanation)
     lines, reversed_ = _log_lines_chronological(text.splitlines())
     if reversed_:
         notes.append(
-            "[note: the API returned these lines newest-first; reordered to "
-            "chronological so causes precede effects]"
+            "The API returned these lines newest-first; reordered to "
+            "chronological so causes precede effects."
         )
     # Extract a typed cause note from the FULL chronological body BEFORE the tail
     # truncation below, so the note survives even if the banner is swept out of it.
-    notes += _log_notes(lines)
+    excerpt = _log_cause_excerpt(lines)
+    if excerpt is not None:
+        result["log_excerpt"] = excerpt
+        notes.append("possible_mpi_launch_failure: see the untrusted log_excerpt; "
+                     "this is a text match, not a verified diagnosis.")
+    metadata["total_lines"] = len(lines)
     if len(lines) > log_tail:
         # keep the END of the chronological log — the failure lives there
-        lines = [f"[showing last {log_tail} of {len(lines)} lines]"] + lines[-log_tail:]
-    return "\n".join(notes + lines) if notes else "\n".join(lines)
+        notes.append(f"showing last {log_tail} of {len(lines)} lines")
+        lines = lines[-log_tail:]
+    metadata["returned_lines"] = len(lines)
+    result["log"] = "\n".join(lines)
+    return _to_json(result)
 
 
 def format_response(

@@ -638,8 +638,9 @@ def _build_handler(dt: DomainTool, actions: list[str], settings: Settings):
             if post is not None:
                 try:
                     data = post(data, values)
-                except Exception:
-                    logger.exception("postprocess %s failed", op.path)
+                except Exception as exc:
+                    diagnostics.failure('postprocess', exc, **log_meta)
+                    logger.error("postprocess %s failed (%s)", op.path, type(exc).__name__)
 
             formatted = formatting.format_response(
                 data,
@@ -692,8 +693,9 @@ def _build_handler(dt: DomainTool, actions: list[str], settings: Settings):
             raise ToolError(message) from exc
         except Exception as exc:  # unexpected: still surface as isError=true, not a crash
             diagnostics.failure('tool', exc, **log_meta)
-            logger.exception("tool %s action=%s failed unexpectedly", dt.name, action)
-            raise ToolError(f"Error: unexpected failure ({type(exc).__name__}).") from exc
+            logger.error("tool %s action=%s failed unexpectedly (%s)",
+                         dt.name, log_meta['action'], type(exc).__name__)
+            raise ToolError(f"Error: unexpected failure ({type(exc).__name__}).") from None
 
     handler.__signature__ = inspect.Signature(sig_params)  # type: ignore[attr-defined]
     handler.__annotations__ = annotations

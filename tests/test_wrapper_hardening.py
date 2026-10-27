@@ -6,6 +6,8 @@ tests: import the function/dict and call it directly.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from mlspace_mcp import formatting
@@ -133,24 +135,22 @@ _TRACEBACK_LOG = (
 
 
 def test_log_mpirun_failure_surfaces_likely_cause():
-    out = formatting.format_response(_MPIRUN_LOG, kind="log")
-    assert "[likely_cause" in out
-    assert "mpirun was unable to launch" in out
+    out = json.loads(formatting.format_response(_MPIRUN_LOG, kind="log"))
+    assert "mpirun was unable to launch" in out["log"]
     # FIX-7: the note now names the concrete missing binary, not just the generic banner
-    note = out.splitlines()[0]
-    assert "Executable: /home/jovyan/train.py" in note
+    assert "Executable: /home/jovyan/train.py" in out["log_excerpt"]
 
 
 def test_log_plain_traceback_has_no_likely_cause():
-    out = formatting.format_response(_TRACEBACK_LOG, kind="log")
-    assert "[likely_cause" not in out
-    assert "ValueError" in out  # full log still shown
+    out = json.loads(formatting.format_response(_TRACEBACK_LOG, kind="log"))
+    assert "log_excerpt" not in out
+    assert "ValueError" in out["log"]  # full log still shown
 
 
 def test_log_likely_cause_survives_tail_truncation():
     # banner at the very top, then many lines → it is swept out of the tail, but the
-    # note (scanned from the full body) still leads the output.
+    # excerpt (scanned from the full body) is retained separately.
     body = _MPIRUN_LOG + "\n".join(f"line{i}" for i in range(500))
-    out = formatting.format_response(body, kind="log", log_tail=50)
-    assert "[likely_cause" in out
-    assert "mpirun was unable to launch" not in out.split("]", 1)[1]  # not in the tail body
+    out = json.loads(formatting.format_response(body, kind="log", log_tail=50))
+    assert "mpirun was unable to launch" in out["log_excerpt"]
+    assert "mpirun was unable to launch" not in out["log"]

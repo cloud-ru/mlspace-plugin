@@ -174,7 +174,7 @@ def with_context(formatted: str, *, environment: str, target: str, workspace_nam
                  refs: list[dict[str, Any]], response_format: str,
                  kind: str, address_note: str | None = None) -> str:
     data: Any = formatted
-    if response_format == "json" and kind != "log":
+    if response_format == "json" or kind == "log":
         try:
             data = json.loads(formatted)
         except (ValueError, TypeError):

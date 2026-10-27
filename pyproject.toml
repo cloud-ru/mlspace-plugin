@@ -1,6 +1,6 @@
 [project]
 name = "mlspace-plugin"
-version = "1.0.0"
+version = "1.0.1"
 description = "Cloud.ru MLSpace plugin: MCP server, agent skills and setup"
 keywords = ["mlspace", "mcp", "agent-skills", "cloudru"]
 classifiers = [

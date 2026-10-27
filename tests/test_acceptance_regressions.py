@@ -110,6 +110,9 @@ async def test_empty_diagnostic_logs_do_not_imply_no_data_changes(action, kwargs
         mock.get(url__regex=BASE_URL + '/public/v2/data_transfer/.*').respond(200, json=[])
         async with httpx.AsyncClient() as http:
             result = json.loads(await handler(action=action, ctx=runtime_ctx(http), **kwargs))
+    if action == 'get_connector_logs':
+        assert result['metadata']['content_trust'] == 'untrusted'
+        result = result['log']
     assert result['result'] == []
     assert result['_mcp_evidence']['data_impact'] == 'unknown'
     assert result['_mcp_evidence']['failure_phase'] == 'unknown'

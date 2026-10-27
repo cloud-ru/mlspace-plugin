@@ -45,9 +45,11 @@ def test_elides_huge_strings():
 
 def test_log_tail():
     text = "\n".join(f"line{i}" for i in range(1000))
-    out = formatting.format_response(text, kind="log", log_tail=50)
-    assert out.startswith("[showing last 50 of 1000 lines]")
-    assert out.strip().endswith("line999")
+    out = json.loads(formatting.format_response(text, kind="log", log_tail=50))
+    assert out["metadata"]["total_lines"] == 1000
+    assert out["metadata"]["returned_lines"] == 50
+    assert out["log"].splitlines()[0] == "line950"
+    assert out["log"].splitlines()[-1] == "line999"
 
 
 def test_empty_and_scalar():
@@ -75,8 +77,8 @@ def test_log_json_branch_redacts_and_caps():
         data, kind="log", redact_keys=("token",), list_cap=10
     )
     parsed = json.loads(out)
-    assert parsed["token"] == "<redacted, 16 chars>"
-    assert len(parsed["lines"]) == 11  # 10 + footer
+    assert parsed["log"]["token"] == "<redacted, 16 chars>"
+    assert len(parsed["log"]["lines"]) == 11  # 10 + footer
 
 
 # registry_repos: elide heavy recent_image.extra_attrs with a get_image pointer ---

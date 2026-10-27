@@ -116,7 +116,8 @@ async def test_notebook_name_actions_require_name_and_namespace_address():
 
 
 @respx.mock
-async def test_multi_logs_preserve_tail_and_no_refs_for_arbitrary_node_names():
+@pytest.mark.parametrize('response_format', ['json', 'markdown'])
+async def test_multi_logs_preserve_tail_and_no_refs_for_arbitrary_node_names(response_format):
     auth()
     respx.get(f"{BASE_URL}/public/v2/jobs/old/logs").respond(200, text="one\ntwo\nthree")
     respx.get(f"{BASE_URL}/public/v2/jobs/old/nodes").respond(200, json=[{"id": "node", "name": "node"}])
@@ -124,9 +125,12 @@ async def test_multi_logs_preserve_tail_and_no_refs_for_arbitrary_node_names():
     async with httpx.AsyncClient() as http:
         ctx = context(runtime(settings, http))
         call = handler(JOBS, settings)
-        logs = json.loads(await call(action="logs", resource_ref=ref(), ctx=ctx))
+        output = await call(action="logs", resource_ref=ref(), ctx=ctx,
+                            response_format=response_format)
+        logs = json.loads(output.removeprefix('```json\n').removesuffix('\n```'))
         nodes = json.loads(await call(action="list_nodes", resource_ref=ref(), ctx=ctx))
-    assert "one" not in logs["data"] and "two\nthree" in logs["data"]
+    assert logs["data"]["log"] == "two\nthree"
+    assert logs["data"]["metadata"]["content_trust"] == "untrusted"
     assert not nodes["resource_refs"]
 
 
